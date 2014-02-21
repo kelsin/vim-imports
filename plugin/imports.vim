@@ -2,7 +2,7 @@
 " Author: Christopher Giroir <kelsin@valefor.com>
 " Version: 0.0.1
 
-if exists("g:loaded_imports") || &cp
+if (exists("g:loaded_imports") && g:loaded_imports) || &cp
   finish
 endif
 let g:loaded_imports = 1
@@ -13,7 +13,7 @@ if !exists("g:imports_sort_order")
 endif
 
 " Returns true if this file includes at least one import statement
-function! HasImports()
+function! imports#has_imports()
   let l:view = winsaveview()
 
   " Search from the beginning to find the first import
@@ -28,10 +28,10 @@ endfunction
 " Moves the cursor to where imports should start. This is the current line of
 " the first import in the file if the file has imports, or at the beginnig (or
 " right after a package line) if not.
-function! FindImportStart()
+function! imports#find_start()
   " Search from the beginning to find the first import
   call cursor(1,1)
-  let l:start = HasImports()
+  let l:start = imports#has_imports()
 
   " If we don't have one let's find a good replacement
   if l:start == 0
@@ -60,7 +60,7 @@ function! FindImportStart()
 endfunction
 
 " This function builds a import regex given a prefix
-function! BuildImportRegex(prefix)
+function! imports#regex(prefix)
   let l:prefix = a:prefix
 
   if !empty(a:prefix)
@@ -72,8 +72,8 @@ endfunction
 
 " Given a prefix, count how many import lines (that match that prefix) are ahead
 " of the cursor. Does not count any imports before the cursor.
-function! CountImportsFromCursor(prefix)
-  let l:regex = BuildImportRegex(a:prefix)
+function! imports#count(prefix)
+  let l:regex = imports#regex(a:prefix)
 
   let l:count = 0
   exe ",$g/" . l:regex . "/let l:count = l:count + 1"
@@ -82,14 +82,14 @@ function! CountImportsFromCursor(prefix)
 endfunction
 
 " Sorts the imports in the file according to g:imports_sort_order
-function! SortImports()
+function! imports#sort()
   " Don't do anything if there are no imports
-  if HasImports()
+  if imports#has_imports()
     " Save view to restore at the end
     let l:view = winsaveview()
 
     " Get import starting point and start there
-    let l:start = FindImportStart()
+    let l:start = imports#find_start()
     let l:current = l:start
 
     " Get sort order and loop over them
@@ -97,7 +97,7 @@ function! SortImports()
     call add(l:imports, "")
     for l:prefix in l:imports
       " Save regex
-      let l:regex = BuildImportRegex(l:prefix)
+      let l:regex = imports#regex(l:prefix)
 
       " Check to make sure we have imports of this type
       let l:search = search(l:regex, 'ncW')
@@ -106,9 +106,9 @@ function! SortImports()
         exe "g/" . l:regex . "/m " . (l:current - 1)
 
         " Count and sort
-        let l:count = CountImportsFromCursor(l:prefix)
+        let l:count = imports#count(l:prefix)
         exe l:current . "," (l:current + l:count - 1) . "sor u"
-        let l:count = CountImportsFromCursor(l:prefix)
+        let l:count = imports#count(l:prefix)
 
         " Insert one line after
         call append(l:current + l:count - 1, "")
@@ -127,7 +127,7 @@ endfunction
 
 " Delete any import whose class name (without package) doesn't appear in the
 " rest of the file.
-function! DeleteUnusedImports()
+function! imports#delete_unused()
   let l:view = winsaveview()
 
   " Lets move to the beginning of the file and start searching for imports
@@ -156,14 +156,14 @@ function! DeleteUnusedImports()
 endfunction
 
 " Runs DeleteUnusedImports and then SortImports
-function! OrganizeImports()
-  call DeleteUnusedImports()
-  call SortImports()
+function! imports#organize()
+  call imports#delete_unused()
+  call imports#sort()
 endfunction
 
 " Grabs the word under the cursor and searches for an import for it. If found we
 " return the fully qualified class name of this name.
-function! FindFullClassName()
+function! imports#find_full_class_name()
   let l:class=expand("<cword>")
 
   " Search for that import
@@ -177,16 +177,16 @@ function! FindFullClassName()
 endfunction
 
 " Function to insert one import into the file.
-function! InsertImport(import)
-  let l:start = FindImportStart()
+function! imports#insert(import)
+  let l:start = imports#find_start()
 
   call append(l:start-1, "import " . a:import . ";")
-  call SortImports()
+  call imports#sort()
   call search('^import\ ' . a:import . ';', '')
 endfunction
 
 " Function to find all importing options from .classtags if it exists
-function! GetImportOptions()
+function! imports#get_options()
   let l:class=expand("<cword>")
   exe "silent vimgrep! /^" . l:class . ":/ .classtags"
   let l:matches=getqflist()
@@ -203,7 +203,7 @@ function! GetImportOptions()
 endfunction
 
 " Commands {{{
-command! ImportsOrganize call OrganizeImports()
-command! ImportsSort call SortImports()
-command! ImportsDeleteUnused call DeleteUnusedImports()
+autocmd FileType java command! -buffer ImportsOrganize call imports#organize()
+autocmd FileType java command! -buffer ImportsDeleteUnused call imports#delete_unused()
+autocmd FileType java command! -buffer ImportsSort call imports#sort()
 " }}}

@@ -202,3 +202,8 @@ function! GetImportOptions()
   endif
 endfunction
 
+" Commands {{{
+command! ImportsOrganize call OrganizeImports()
+command! ImportsSort call SortImports()
+command! ImportsDeleteUnused call DeleteUnusedImports()
+" }}}

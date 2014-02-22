@@ -152,16 +152,24 @@ endfunction
 " Grabs the word under the cursor and searches for an import for it. If found we
 " return the fully qualified class name of this name.
 function! imports#find_full_class_name()
-  let l:class=expand("<cword>")
-
-  " Search for that import
-  let l:search=search("^import\\ .*" . l:class . ";", 'nc')
-  if l:search != 0
-    let l:line=getline(l:search)
-    return substitute(l:line, '^import\ \(.*\);$', '\=submatch(1)', 'g')
+  let l:line = getline(".")
+  if match(l:line, '^import\ ') >= 0
+    return imports#find_full_class_name_from_import(l:line)
   else
-    return ""
+    let l:class=expand("<cword>")
+
+    " Search for that import
+    let l:search=search("^import\\ .*" . l:class . ";", 'nc')
+    if l:search != 0
+      return imports#find_full_class_name_from_import(getline(l:search))
+    else
+      return ""
+    endif
   endif
+endfunction
+
+function! imports#find_full_class_name_from_import(import)
+  return substitute(a:import, '^import\ \(.*\);$', '\=submatch(1)', 'g')
 endfunction
 
 " Function to insert one import into the file.
@@ -187,5 +195,43 @@ function! imports#get_options()
     endif
   else
     echo "No Matches"
+  endif
+endfunction
+
+function! imports#open_javadoc_under_cursor()
+  let l:class = imports#find_full_class_name()
+  if empty(l:class)
+    echo "No class found"
+  else
+    if match(l:class, '^java') >= 0
+      call imports#open_system_javadoc(l:class)
+    else
+      call imports#open_maven_javadoc(l:class)
+    endif
+  endif
+endfunction
+
+function! imports#open_system_javadoc(class)
+  call imports#open(imports#get_system_javadoc_file(a:class))
+endfunction
+
+function! imports#open_maven_javadoc(class)
+  call imports#open(imports#get_maven_javadoc_file(a:class))
+endfunction
+
+function! imports#get_system_javadoc_file(class)
+  let l:url = substitute(a:class, '\.', '\', 'g')
+  return "http://docs.oracle.com/javase/7/docs/api/" . l:url . ".html"
+endfunction
+
+function! imports#get_maven_javadoc_file(class)
+  let l:url = substitute(a:class, '\.', '/', 'g')
+  return "target/apidocs/" . l:url . ".html"
+endfunction
+
+" Function to open a string using the OS open/start features
+function! imports#open(str)
+  if has("win32")
+    exe "!start /b start " . a:str
   endif
 endfunction

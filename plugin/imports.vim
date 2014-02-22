@@ -16,3 +16,4 @@ endif
 autocmd FileType java command! -buffer ImportsOrganize call imports#organize()
 autocmd FileType java command! -buffer ImportsDeleteUnused call imports#delete_unused()
 autocmd FileType java command! -buffer ImportsSort call imports#sort()
+autocmd FileType java command! -buffer ImportsOpenJavadoc call imports#open_javadoc_under_cursor()

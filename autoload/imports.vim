@@ -216,7 +216,13 @@ function! imports#open_system_javadoc(class)
 endfunction
 
 function! imports#open_maven_javadoc(class)
-  call imports#open(imports#get_maven_javadoc_file(a:class))
+  let l:url = substitute(a:class, '\.', '/', 'g')
+  let l:file = "target/apidocs/" . l:url . ".html"
+  if filereadable(l:file)
+    call imports#open(l:file)
+  else
+    call imports#google_javadoc(a:class)
+  endif
 endfunction
 
 function! imports#get_system_javadoc_file(class)
@@ -224,9 +230,12 @@ function! imports#get_system_javadoc_file(class)
   return "http://docs.oracle.com/javase/7/docs/api/" . l:url . ".html"
 endfunction
 
-function! imports#get_maven_javadoc_file(class)
-  let l:url = substitute(a:class, '\.', '/', 'g')
-  return "target/apidocs/" . l:url . ".html"
+function! imports#google_javadoc(class)
+  call imports#google("javadoc+" . a:class)
+endfunction
+
+function! imports#google(search)
+  call imports#open("https://www.google.com/\\#q=" . a:search)
 endfunction
 
 " Function to open a string using the OS open/start features

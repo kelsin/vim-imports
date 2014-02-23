@@ -205,7 +205,7 @@ endfunction
 function! imports#open_javadoc_under_cursor()
   let l:class = imports#find_full_class_name()
   if empty(l:class)
-    echo "No class found"
+    call imports#google_javadoc(expand("<cword>"))
   else
     if match(l:class, '^java') >= 0
       call imports#open_system_javadoc(l:class)

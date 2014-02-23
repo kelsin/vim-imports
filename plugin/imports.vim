@@ -12,6 +12,16 @@ if !exists("g:imports_sort_order")
   let g:imports_sort_order="java,javax,net,org,com"
 endif
 
+" Option for where system docs are stored
+if !exists("g:imports_system_doc_root")
+  let g:imports_system_doc_root = "http://docs.oracle.com/javase/7/docs/api/"
+endif
+
+" Option for where maven docs are stored
+if !exists("g:imports_maven_doc_root")
+  let g:imports_maven_doc_root = "target/apidocs/"
+endif
+
 " Autocmds to only create commands in java buffers
 autocmd FileType java command! -buffer ImportsOrganize call imports#organize()
 autocmd FileType java command! -buffer ImportsDeleteUnused call imports#delete_unused()

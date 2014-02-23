@@ -172,6 +172,10 @@ function! imports#find_full_class_name_from_import(import)
   return substitute(a:import, '^import\ \(.*\);$', '\=submatch(1)', 'g')
 endfunction
 
+function! imports#find_class_name_from_full_class_name(fullclass)
+  return substitute(a:fullclass, '^.*\.\([^\.]\+\)$', '\=submatch(1)', '')
+endfunction
+
 " Function to insert one import into the file.
 function! imports#insert(import)
   let l:start = imports#find_start()
@@ -217,7 +221,7 @@ endfunction
 
 function! imports#open_maven_javadoc(class)
   let l:url = substitute(a:class, '\.', '/', 'g')
-  let l:file = "target/apidocs/" . l:url . ".html"
+  let l:file = g:imports_maven_doc_root . l:url . ".html"
   if filereadable(l:file)
     call imports#open(l:file)
   else
@@ -227,11 +231,11 @@ endfunction
 
 function! imports#get_system_javadoc_file(class)
   let l:url = substitute(a:class, '\.', '\', 'g')
-  return "http://docs.oracle.com/javase/7/docs/api/" . l:url . ".html"
+  return g:imports_system_doc_root . l:url . ".html"
 endfunction
 
 function! imports#google_javadoc(class)
-  call imports#google("javadoc+" . a:class)
+  call imports#google("javadoc+" . imports#find_class_name_from_full_class_name(a:class))
 endfunction
 
 function! imports#google(search)

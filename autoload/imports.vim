@@ -272,3 +272,20 @@ function! imports#open(str)
     exe "!start /b start " . a:str
   endif
 endfunction
+
+" Format file with ecliipse formatter
+function! imports#format()
+  let l:path = expand("%:p")
+  let l:command = "\"" . g:imports_eclipse_exe . "\" -nosplash -vm "
+        \. g:imports_eclipse_java . " -application "
+        \. "org.eclipse.jdt.core.JavaCodeFormatter -config "
+        \. g:imports_eclipse_prefs . " " . l:path
+
+  " First write the file
+  write
+
+  " Then run the formatting
+  exe "silent !start cmd /c " . l:command
+  edit
+endfunction
+

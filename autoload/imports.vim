@@ -176,11 +176,10 @@ function! imports#find_import_from_classtags(class)
     " Found the proper impot
     let l:import = substitute(getline('.'), '^\([^:]\+\):\([^:]\+\):.*$', '\=submatch(2).".".submatch(1)', '')
     bd
-    echo "Found import for " . a:class . ": " . l:import
     call imports#insert(l:import)
   else
     exe ':%s/^\([^:]\+\):\([^:]\+\):.*$/\2\.\1/g'
-    noh
+    0
     nnoremap <buffer> <CR> :call imports#select()<CR>
   endif
 endfunction
@@ -225,23 +224,6 @@ function! imports#insert(import)
   call append(l:start-1, "import " . a:import . ";")
   call imports#sort()
   call search('^import\ ' . a:import . ';', '')
-endfunction
-
-" Function to find all importing options from .classtags if it exists
-function! imports#get_options()
-  let l:class=expand("<cword>")
-  exe "silent vimgrep! /^" . l:class . ":/ .classtags"
-  let l:matches=getqflist()
-  if len(l:matches) > 0
-    bd
-    if len(l:matches) == 1
-      return substitute(l:matches[0]['text'], '^\(.*\):\(.*\):\(.*\)$', '\=submatch(2) . "." . submatch(1)', 'g')
-    else
-      echo "More than 1"
-    endif
-  else
-    echo "No Matches"
-  endif
 endfunction
 
 function! imports#open_javadoc_under_cursor()

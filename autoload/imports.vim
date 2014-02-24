@@ -149,6 +149,48 @@ function! imports#organize()
   call imports#sort()
 endfunction
 
+function! imports#find_import_for_class_under_cursor()
+  let l:class = expand('<cword>')
+  let l:search=search("^import\\ .*" . l:class . ";", 'nc')
+  if l:search != 0
+    " Already have an import, we're done
+    echo "Found import for " . l:class . " on line " . l:search
+  else
+    call imports#find_import_from_classtags(l:class)
+  endif
+endfunction
+
+function! imports#find_import_from_classtags(class)
+  let curr_buf = bufnr('%')
+  split __imports_classtags__
+  normal! ggdG
+  setlocal filetype=text
+  setlocal buftype=nofile
+  call append(0, readfile(".classtags"))
+  exe ":v/^" . a:class . ":/d"
+  let l:results = line('$')
+  if l:results == 0
+    echo "Can't find a import for " . a:class
+    bd
+  elseif l:results == 1
+    " Found the proper impot
+    let l:import = substitute(getline('.'), '^\([^:]\+\):\([^:]\+\):.*$', '\=submatch(2).".".submatch(1)', '')
+    bd
+    echo "Found import for " . a:class . ": " . l:import
+    call imports#insert(l:import)
+  else
+    exe ':%s/^\([^:]\+\):\([^:]\+\):.*$/\2\.\1/g'
+    noh
+    nnoremap <buffer> <CR> :call imports#select()<CR>
+  endif
+endfunction
+
+function! imports#select()
+  let l:import = getline(".")
+  bd
+  call imports#insert(l:import)
+endfunction
+
 " Grabs the word under the cursor and searches for an import for it. If found we
 " return the fully qualified class name of this name.
 function! imports#find_full_class_name()

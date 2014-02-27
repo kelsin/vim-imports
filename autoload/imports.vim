@@ -151,7 +151,7 @@ endfunction
 
 function! imports#find_import_for_class_under_cursor()
   let l:class = expand('<cword>')
-  let l:search=search("^import\\ .*" . l:class . ";", 'nc')
+  let l:search = search("^import\\ .*\\." . l:class . ";", 'nc')
   if l:search != 0
     " Already have an import, we're done
     echo "Found import for " . l:class . " on line " . l:search
@@ -161,13 +161,15 @@ function! imports#find_import_for_class_under_cursor()
 endfunction
 
 function! imports#find_import_from_classtags(class)
+  let l:line = line(".")
+  let l:col = col(".")
   let curr_buf = bufnr('%')
   split __imports_classtags__
   normal! ggdG
   setlocal filetype=text
   setlocal buftype=nofile
   call append(0, readfile(".classtags"))
-  exe ":v/^" . a:class . ":/d"
+  exe ":silent v/^" . a:class . ":/d"
   let l:results = line('$')
   if l:results == 0
     echo "Can't find a import for " . a:class
@@ -177,17 +179,22 @@ function! imports#find_import_from_classtags(class)
     let l:import = substitute(getline('.'), '^\([^:]\+\):\([^:]\+\):.*$', '\=submatch(2).".".submatch(1)', '')
     bd
     call imports#insert(l:import)
+    call cursor(l:line + 1, l:col)
   else
-    exe ':%s/^\([^:]\+\):\([^:]\+\):.*$/\2\.\1/g'
+    exe ':silent %s/^\([^:]\+\):\([^:]\+\):.*$/\2\.\1/g'
     0
-    nnoremap <buffer> <CR> :call imports#select()<CR>
+    let b:importsLine = l:line
+    let b:importsCol = l:col
+    nnoremap <buffer> <CR> :call imports#select(b:importsLine, b:importsCol)<CR>
   endif
+
 endfunction
 
-function! imports#select()
+function! imports#select(line, col)
   let l:import = getline(".")
   bd
   call imports#insert(l:import)
+  call cursor(a:line + 1, a:col)
 endfunction
 
 " Grabs the word under the cursor and searches for an import for it. If found we

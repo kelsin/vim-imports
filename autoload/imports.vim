@@ -168,6 +168,7 @@ function! imports#find_import_from_classtags(class)
   normal! ggdG
   setlocal filetype=text
   setlocal buftype=nofile
+  setlocal bufhidden=wipe
   call append(0, readfile(".classtags"))
   exe ":silent v/^" . a:class . ":/d"
   let l:results = line('$')
